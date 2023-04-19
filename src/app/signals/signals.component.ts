@@ -33,8 +33,6 @@ import { Person, StarWarsService } from '../star-wars.service';
     <button type="button" (click)="search()">Search</button>
     <span *ngIf="isLoading()"> Loading... </span>
     <br />
-    criteria: {{ criteria() }}
-    <br />
 
     <ul>
       <li *ngFor="let p of filteredPeople()">{{ p.name }} ({{ p.gender }})</li>
@@ -51,16 +49,18 @@ export default class SignalsComponent {
   readonly isLoading = signal(false);
   readonly people = signal<Person[]>([]);
 
-  readonly criteria = computed(
-    () => `Name: ${this.inputName()}, Gender: ${this.inputGender()}`
+  readonly filteredPeople = computed(() =>
+    this.people().filter((person) => {
+      return (
+        person.name
+          .toLocaleLowerCase()
+          .startsWith(this.inputName().toLocaleLowerCase()) &&
+        person.gender
+          .toLocaleLowerCase()
+          .startsWith(this.inputGender().toLocaleLowerCase())
+      );
+    })
   );
-    
-  readonly filteredPeople = computed(() => {
-    return this.people().filter(person => {
-      return person.name.toLocaleLowerCase().startsWith(this.inputName().toLocaleLowerCase()) &&
-             person.gender.toLocaleLowerCase().startsWith(this.inputGender().toLocaleLowerCase());
-    });  
-  });
 
   constructor() {
     effect(() => {
