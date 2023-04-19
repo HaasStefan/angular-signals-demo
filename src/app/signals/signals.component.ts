@@ -5,10 +5,41 @@ import {
   effect,
   inject,
   signal,
+  WritableSignal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Person, StarWarsService } from '../star-wars.service';
+
+export function onUpdate<T>(signal: WritableSignal<T>, callback: (value: T) => void) {
+  const original = signal.update;
+  signal.update = (updateFn: (value: T) => T) => {
+      original(updateFn);
+      callback(signal());
+  };
+}
+
+export function onSet<T>(
+  signal: WritableSignal<T>,
+  callback: (value: T) => void
+) {
+  const original = signal.set;
+  signal.set = (value: T) => {
+    original(value);
+    callback(value);
+  };
+}
+
+export function onMutate<T>(
+  signal: WritableSignal<T>,
+  callback: (value: T) => void
+) {
+  const original = signal.mutate;
+  signal.mutate = (mutatorFn: (value: T) => void) => {
+    original(mutatorFn);
+    callback(signal());
+  };
+}
 
 @Component({
   selector: 'app-signals',
@@ -34,6 +65,12 @@ import { Person, StarWarsService } from '../star-wars.service';
     <span *ngIf="isLoading()"> Loading... </span>
     <br />
 
+    <button type="button" (click)="set()">set</button>
+    <button type="button" (click)="update()">update</button>
+    <button type="button" (click)="mutate()">mutate</button>
+    <br />
+    Counter: {{ counter() }}
+
     <ul>
       <li *ngFor="let p of filteredPeople()">{{ p.name }} ({{ p.gender }})</li>
     </ul>
@@ -49,6 +86,8 @@ export default class SignalsComponent {
   readonly isLoading = signal(false);
   readonly people = signal<Person[]>([]);
 
+  readonly counter = signal(0);
+
   readonly filteredPeople = computed(() =>
     this.people().filter((person) => {
       return (
@@ -63,10 +102,29 @@ export default class SignalsComponent {
   );
 
   constructor() {
+    onSet(this.counter, console.log);
+    onMutate(this.counter, console.warn);
+    onUpdate(this.counter, console.error);
+
     effect(() => {
       if (this.isLoading()) {
         console.log('Searching...');
       }
+    });
+  }
+
+  set() {
+    const counter = this.counter();
+    this.counter.set(counter + 1);
+  }
+
+  update() {
+    this.counter.update((val) => val + 1);
+  }
+
+  mutate() {
+    this.counter.mutate((val) => {
+      val = val + 1;
     });
   }
 
