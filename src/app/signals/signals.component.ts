@@ -36,8 +36,8 @@ import { Person, StarWarsService } from '../star-wars.service';
     criteria: {{ criteria() }}
     <br />
 
-    <ul *ngIf="people() as people">
-      <li *ngFor="let p of people">{{ p.name }} ({{ p.gender }})</li>
+    <ul>
+      <li *ngFor="let p of filteredPeople()">{{ p.name }} ({{ p.gender }})</li>
     </ul>
   `,
   styleUrls: ['./signals.component.scss'],
@@ -54,6 +54,13 @@ export default class SignalsComponent {
   readonly criteria = computed(
     () => `Name: ${this.inputName()}, Gender: ${this.inputGender()}`
   );
+    
+  readonly filteredPeople = computed(() => {
+    return this.people().filter(person => {
+      return person.name.toLocaleLowerCase().startsWith(this.inputName().toLocaleLowerCase()) &&
+             person.gender.toLocaleLowerCase().startsWith(this.inputGender().toLocaleLowerCase());
+    });  
+  });
 
   constructor() {
     effect(() => {
@@ -68,19 +75,7 @@ export default class SignalsComponent {
 
     this.isLoading.set(true);
     const allPeople = await this.#starWars.getPeopleAsPromise();
-    this.people.set(this.#filterPeople(allPeople));
+    this.people.set(allPeople);
     this.isLoading.set(false);
-  }
-
-  #filterPeople(people: Person[]): Person[] {
-    return people.filter(
-      (p) =>
-        p.name
-          .toLocaleLowerCase()
-          .startsWith(this.inputName().toLocaleLowerCase()) &&
-        p.gender
-          .toLocaleLowerCase()
-          .startsWith(this.inputGender().toLocaleLowerCase())
-    );
   }
 }
