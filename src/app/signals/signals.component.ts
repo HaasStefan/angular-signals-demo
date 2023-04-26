@@ -30,7 +30,6 @@ import { Person, StarWarsService } from '../star-wars.service';
       placeholder="Gender..."
     />
     <br />
-    <button type="button" (click)="search()">Search</button>
     <span *ngIf="isLoading()"> Loading... </span>
     <br />
 
@@ -64,14 +63,14 @@ export default class SignalsComponent {
 
   constructor() {
     effect(() => {
-      if (this.isLoading()) {
-        console.log('Searching...');
-      }
+      this.search();
+    }, {
+      allowSignalWrites: true
     });
   }
 
   async search() {
-    if (!this.inputName || !this.inputGender) return;
+    if (!this.inputName() || !this.inputGender()) return;
 
     this.isLoading.set(true);
     const allPeople = await this.#starWars.getPeopleAsPromise();
